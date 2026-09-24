@@ -44,7 +44,7 @@ PitchIntel-AI/
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/your-username/PitchIntel-AI.git](https://github.com/your-username/PitchIntel-AI.git)
+   git clone [https://github.com/your-username/PitchIntel-AI.git](https://github.com/nidhal-majoul/PitchIntel-AI.git)
    cd PitchIntel-AI
    ```
 
