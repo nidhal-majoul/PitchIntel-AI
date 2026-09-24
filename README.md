@@ -1,62 +1,65 @@
-# PitchIntel AI ⚽🤖
-> **Real-Time Football Computer Vision & Player Pose Analytics**
+# PitchIntel AI ⚽ | Computer Vision Pipeline for Football Analytics
 
-![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat&logo=python&logoColor=white)
-![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-000000?style=flat)
-![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-5C3EE8?style=flat&logo=opencv&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-EE4C2C?style=flat&logo=pytorch&logoColor=white)
-
-**PitchIntel AI** is a computer vision pipeline built to analyze broadcast football match clips frame-by-frame. It utilizes deep learning neural networks to perform real-time player pose estimation and ball tracking.
+PitchIntel AI is an end-to-end computer vision pipeline designed to extract tactical analytics from broadcasting camera feeds using object detection, pose estimation, and color-space clustering.
 
 ---
 
-## 📋 Table of Contents
-- [Overview \& Key Features](#-overview--key-features)
-- [🛠️ Tech Stack \& Tools](#️-tech-stack--tools)
-- [🧠 How the AI Works](#-how-the-ai-works)
-- [📁 Repository Structure](#-repository-structure)
-- [🔍 Detailed Code Breakdown](#-detailed-code-breakdown)
-- [🐍 Source Code (`camera.py`)](#-source-code-camerapy)
-- [🚀 How to Run the Project](#-how-to-run-the-project)
+## 🚀 Features & Milestones
 
----
+### Milestone 1: Player & Ball Detection (Pose Estimation)
+* Detects players on the pitch using YOLOv8 pose models (`yolov8n-pose.pt`).
+* Tracks ball position frame-by-frame using targeted class filtering (`yolov8n.pt`, Class 32).
 
-## 🌟 Overview & Key Features
-
-- **Skeletal Pose Estimation:** Detects players on the pitch and extracts 17 anatomical body keypoints (eyes, shoulders, elbows, hips, knees, ankles) to visualize posture and movement.
-- **Ball Detection:** Scans every frame for the football (Class 32) and displays bounding boxes along with real-time model confidence scores.
-- **Live Video Pipeline:** Streams the video frame-by-frame, overlays computer vision visual annotations, displays a live interactive window, and exports the final result as an `.mp4` file.
-
----
-
-## 🛠️ Tech Stack & Tools
-
-| Tool / Library | Category | Description |
-| :--- | :--- | :--- |
-| **Python 3.9+** | Programming Language | Core execution environment. |
-| **Ultralytics YOLOv8** | Computer Vision Framework | Pre-trained deep learning neural network architecture for pose and object detection. |
-| **OpenCV (`opencv-python`)** | Image Processing | Handles video streaming, frame extraction, bounding box drawing, text rendering, and video saving. |
-| **PyTorch** | Deep Learning Backend | Powering neural network tensor calculations on CPU/GPU. |
-
----
-
-## 🧠 How the AI Works
-
-Unlike traditional computer vision algorithms that rely on manual color masks or fixed shapes, PitchIntel AI relies on **Convolutional Neural Networks (CNNs)** trained on massive datasets.
+### Milestone 2: Unsupervised Team Classification
+Instead of retraining heavy detection models for custom kit colors, PitchIntel AI uses a custom two-phase computer vision pipeline to separate players into **Team 1** and **Team 2** in real time.
 
 ```text
-Broadcast Input Video (data/Lionel_Messi.mp4)
-       │
-       ├──► 1. Frame Capture (OpenCV cv2.VideoCapture)
-       │
-       ├──► 2. Pose Estimation Inference (yolov8n-pose.pt)
-       │       └── Detects humans & renders 17 skeletal joint keypoints
-       │
-       ├──► 3. Object Detection Inference (yolov8n.pt)
-       │       └── Scans for Class 32 (sports ball) & extracts bounding boxes + confidence
-       │
-       ├──► 4. OpenCV Annotation Layer
-       │       └── Draws yellow bounding box & text label for detected ball
-       │
-       └──► 5. Video File Export (cv2.VideoWriter)
-               └── Saves annotated video to output_analytics.mp4
+[Frame Input] ──► [Player BBox] ──► [Torso Crop] ──► [HSV Grass Masking] ──► [K-Means (k=1)] ──► [Global Cluster (k=2)] ──► [Team Assignment]
+```
+
+#### Pipeline Architecture
+1. **Torso ROI Isolation:** Cuts the top 50% of each player bounding box to isolate shirt pixels and remove shorts, boots, and shadows.
+2. **HSV Grass Removal:** Converts torso crops from BGR to HSV color space and applies a green hue mask ($35 \le H \le 85$) to filter out background pitch grass.
+3. **Dominant Color Extraction:** Runs single-cluster K-Means ($k=1$) on non-grass jersey pixels to derive a clean BGR color vector for each player.
+4. **Global Team Clustering:** Collects initial frame samples and fits a 2-cluster K-Means ($k=2$) model to automatically identify primary kit colors for both teams without manual tuning.
+
+---
+
+## 📁 Repository Structure
+
+```text
+PitchIntel-AI/
+├── data/
+│   └── Lionel_Messi.mp4          # Source video clip
+├── output_team_analytics.mp4     # Generated analytics output
+├── team_classifier.py            # Helper module for HSV masking & KMeans clustering
+├── camera.py                     # Main pipeline orchestration script
+├── requirements.txt              # Project dependencies
+└── README.md                     # Project documentation
+```
+
+---
+
+## 🛠️ Setup & Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/your-username/PitchIntel-AI.git](https://github.com/your-username/PitchIntel-AI.git)
+   cd PitchIntel-AI
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the classification pipeline:**
+   ```bash
+   python camera.py
+   ```
+
+---
+
+## 🛠️ Tech Stack
+* **Language:** Python
+* **Vision & AI:** OpenCV, Ultralytics YOLOv8, Scikit-Learn (KMeans), NumPy, PyTorch
